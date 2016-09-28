@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap  PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<!-- Just like hibernate's mapping xml file, this is ibatis' mapping xml file -->
+
+<sqlMap namespace="user">
+
+    <typeAlias alias="USER" type="spring.boot.ibatis.User" />
+
+    <resultMap id="userResultMap" class="USER">
+        <result property="id" column="ID" />
+        <result property="firstName" column="FNAME" />
+        <result property="lastName" column="LNAME" />
+        <result property="email" column="EMAIL" />
+    </resultMap>
+
+
+    <update id="createUserInfoTable" parameterClass="java.lang.String" >
+        create table if not exists USERINFO (ID INTEGER auto_increment,FNAME varchar(255),LNAME varchar(255),EMAIL varchar(50))
+    </update>
+
+    <update id="dropUserInfoTable" parameterClass="java.lang.String" >
+        drop table USERINFO if exists
+    </update>
+
+    <select id="getUserById" parameterClass="java.lang.Integer" resultMap="userResultMap">
+        SELECT * FROM USERINFO WHERE ID = #value#
+    </select>
+
+    <select id="getAllUsers" parameterClass="USER" resultMap="userResultMap"> <!-- if you use resultClass="USER" instead of resultMap="userResultMap", then it won't use resultMap mapping. It will try find exact name matching between USERINFO column names and USER class property names.-->
+        SELECT * FROM USERINFO
+        <!-- Example of dynamic SQL -->
+        <dynamic prepend="WHERE ">
+            <isNotEmpty prepend="AND" property="id">
+                ID = #id#
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="firstName">
+                FNAME = #firstName#
+            </isNotEmpty>
+        </dynamic>
+    </select>
+
+    <select id="getMaxId" resultClass="java.lang.Integer">
+        SELECT MAX(ID) FROM USERINFO
+    </select>
+
+    <insert id="addUser" parameterClass="USER">
+        INSERT INTO USERINFO (FNAME, LNAME, EMAIL)
+        VALUES(#firstName#,#lastName#,#email#);
+    </insert>
+
+    <delete id="deleteUserById" parameterClass="java.lang.Integer">
+        DELETE FROM USERINFO WHERE ID = #value#
+    </delete>
+
+    <!--
+    Example of a method deleteCriteria(criteriaList) having list as a parameter
+    you need to iterate a list using 'foreach' to convert criteria into IN clause
+
+    http://www.tutorialspoint.com/ibatis/ibatis_dynamic_sql.htm
+
+    <delete id="deleteCriteria">
+		DELETE FROM offer_app.offer_criteria where offer_criteria_id IN
+		<foreach item="item" index="index" collection="list" open="("
+			separator="," close=")">
+			#{item}
+		</foreach>
+	</delete>
+
+	Example of using a sequence to create an id while inserting a record.
+    http://www.tutorialspoint.com/ibatis/ibatis_create_operation.htm
+
+    CriteriaRow is an inner class of OfferCriteriaDAOImpl
+    <typeAlias type="com.cobalt.services.offers.dao.mybatis.OfferCriteriaDAOImpl$CriteriaRow" alias="CriteriaRow"/>
+
+	<insert id="addCriteriaField" parameterType="CriteriaRow" keyProperty="id" useGeneratedKeys="true">
+		<selectKey keyProperty="id" resultType="Long" order="BEFORE">
+			select offer_app.offer_criteria_field_seq.nextval from dual
+		</selectKey>
+		INSERT INTO offer_app.offer_criteria_field (offer_criteria_field_id,offer_criteria_id,key,value,created_by,modified_by)
+		VALUES (#{id},#{criteriaId}, #{key,jdbcType=VARCHAR}, #{value,jdbcType=VARCHAR}, #{createdBy},#{modifiedBy})
+	</insert>
+    -->
+
+</sqlMap>
